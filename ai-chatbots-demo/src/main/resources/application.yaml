@@ -1,0 +1,25 @@
+spring:
+  application:
+    name: ai-chatbots-demo
+
+  ai:
+    openai:
+      api-key: ${OPENAI_API_KEY:}
+      chat:
+        options:
+          model: gpt-5.4-mini
+          max-completion-tokens: 100
+          temperature: 0.5
+server:
+  port: 6020
+
+logging:
+  level:
+    root: info
+    org:
+      springframework:
+        ai: info
+
+springdoc:
+  swagger-ui:
+    url: /swagger-ui.html
