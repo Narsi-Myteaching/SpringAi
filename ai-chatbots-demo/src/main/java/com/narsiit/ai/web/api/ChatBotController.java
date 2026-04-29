@@ -2,65 +2,92 @@ package com.narsiit.ai.web.api;
 
 import com.narsiit.ai.beans.ChatBotRequest;
 import com.narsiit.ai.beans.ChatBotResponse;
-import com.narsiit.ai.web.service.ChatBotManager;
 import org.springframework.ai.chat.client.ChatClient;
-import org.springframework.ai.chat.messages.AssistantMessage;
+import org.springframework.ai.chat.client.advisor.MessageChatMemoryAdvisor;
+import org.springframework.ai.chat.memory.ChatMemory;
+import org.springframework.ai.chat.memory.ChatMemoryRepository;
 import org.springframework.ai.chat.messages.Message;
-import org.springframework.ai.chat.messages.SystemMessage;
-import org.springframework.ai.chat.messages.UserMessage;
-import org.springframework.ai.chat.model.ChatResponse;
-import org.springframework.ai.chat.prompt.ChatOptions;
-import org.springframework.ai.chat.prompt.Prompt;
-import org.springframework.web.bind.annotation.PostMapping;
-import org.springframework.web.bind.annotation.RequestBody;
-import org.springframework.web.bind.annotation.RestController;
+import org.springframework.ai.openai.OpenAiChatModel;
+import org.springframework.util.CollectionUtils;
+import org.springframework.web.bind.annotation.*;
 
-import java.util.ArrayList;
-import java.util.List;
+import java.util.*;
 
 @RestController
 public class ChatBotController {
 
-  private final ChatClient chatClient;
-  private final ChatBotManager chatBotManager;
+  private final ChatClient inMemoryChatClient;
+  private final ChatMemory chatMemory;
+
   final String systemMessage = "You are mypersonal assistant";
 
-  public ChatBotController(ChatClient.Builder chatBuilder, ChatBotManager chatBotManager) {
+  public ChatBotController(OpenAiChatModel openAiChatModel, ChatMemory chatMemory) {
+      this.chatMemory = chatMemory;
 
-    this.chatClient = chatBuilder.build();
 
-    this.chatBotManager = chatBotManager;
+      //step-1: prepare the chat memory advisor
+      var messageChatMemoryAdvisor = MessageChatMemoryAdvisor
+              .builder(chatMemory)
+              .build();
+
+     //step-2: Create Chat Client with the Advisors
+      this.inMemoryChatClient = ChatClient
+              .builder(openAiChatModel)
+              .defaultAdvisors(messageChatMemoryAdvisor)
+              .build();
   }
 
   @PostMapping(value = {"/api/chat"})
   public ChatBotResponse askQuestion(@RequestBody ChatBotRequest chatBotRequest) {
 
     String sessionId = chatBotRequest.sessionId();
+    var chatRequest = this.inMemoryChatClient
+            .prompt()
+            .system(systemMessage)
+            .user(chatBotRequest.question())
+            .advisors(advisor->advisor.param(ChatMemory.CONVERSATION_ID,sessionId));
 
-
-    // step-1: check new session or not
-    boolean isExistedSession = chatBotManager.isExistedSession(sessionId);
-    List<Message> previousChatHistory = new ArrayList<>();
-    if (isExistedSession) {
-      previousChatHistory = chatBotManager.getChatHistory(sessionId);
-    }else{
-      chatBotManager.addSystemMessage(sessionId, systemMessage);
-    }
-    var newChatMessage = new ArrayList<>(previousChatHistory);
-
-    newChatMessage.add(new UserMessage(chatBotRequest.question()));
-
-    Prompt prompt = new Prompt(newChatMessage);
     String assistantAnswer =
-        this.chatClient
-                .prompt(prompt)
+            chatRequest
                 .call()
                 .chatResponse()
                 .getResult().
                 getOutput().
                 getText();
 
-    chatBotManager.addChatHistory(sessionId, chatBotRequest.question(), assistantAnswer);
+    return new ChatBotResponse(chatBotRequest.question(), assistantAnswer);
+  }
+
+  @DeleteMapping(value = {"/api/chat/{sessionId}"})
+  public Map<String, Boolean> deleteConversation(@PathVariable String sessionId){
+    Map<String, Boolean> responseMap = new HashMap<>();
+    chatMemory.clear(sessionId);
+    List<Message> conversationList = chatMemory.get(sessionId);
+    if(CollectionUtils.isEmpty(conversationList)){
+      responseMap.put("isConversationDeleted", true);
+    }else{
+      responseMap.put("isConversationDeleted", false);
+    }
+    return  responseMap;
+  }
+
+  @PostMapping(value = {"/api/fact-check"})
+  public ChatBotResponse factCheck(@RequestBody ChatBotRequest chatBotRequest) {
+
+    String sessionId = chatBotRequest.sessionId();
+    var chatRequest = this.inMemoryChatClient
+            .prompt()
+            .system(systemMessage)
+            .user(chatBotRequest.question())
+            .advisors(advisor->advisor.param(ChatMemory.CONVERSATION_ID,sessionId));
+
+    String assistantAnswer =
+            chatRequest
+                    .call()
+                    .chatResponse()
+                    .getResult().
+                    getOutput().
+                    getText();
 
     return new ChatBotResponse(chatBotRequest.question(), assistantAnswer);
   }

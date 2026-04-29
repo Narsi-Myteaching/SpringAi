@@ -1,0 +1,62 @@
+[
+    {
+        "productId": "PROD-1001",
+        "name": "Wireless Noise-Canceling Headphones",
+        "description": "Premium over-ear headphones with active noise cancellation, 30-hour battery life, and Bluetooth 5.2 connectivity.",
+        "price": 299.99,
+        "supplierPrice": 150.00,
+        "supplier": "TechGear Wholesale",
+        "quantity": 50,
+        "rating": 4.5,
+        "brand": "AudioTech",
+        "category": "Electronics"
+    },
+    {
+        "productId": "PROD-1002",
+        "name": "Mechanical Gaming Keyboard",
+        "description": "RGB backlit mechanical keyboard with tactile blue switches and detachable wrist rest.",
+        "price": 129.99,
+        "supplierPrice": 65.00,
+        "supplier": "TechGear Wholesale",
+        "quantity": 120,
+        "rating": 4.7,
+        "brand": "ClickMaster",
+        "category": "Electronics"
+    },
+    {
+        "productId": "PROD-1003",
+        "name": "4K Ultra HD Webcam",
+        "description": "High-definition streaming camera with auto-focus, dual microphones, and privacy shutter.",
+        "price": 89.50,
+        "supplierPrice": 40.00,
+        "supplier": "Visionary Supplies",
+        "quantity": 75,
+        "rating": 4.2,
+        "brand": "ClearView",
+        "category": "Electronics"
+    },
+    {
+        "productId": "PROD-1004",
+        "name": "Portable SSD 1TB",
+        "description": "Ultra-fast external solid-state drive, shock-resistant, USB-C 3.2 interface.",
+        "price": 119.99,
+        "supplierPrice": 60.00,
+        "supplier": "DataStore Corp",
+        "quantity": 200,
+        "rating": 4.8,
+        "brand": "ByteVault",
+        "category": "Electronics"
+    },
+    {
+        "productId": "PROD-1005",
+        "name": "Ergonomic Office Mouse",
+        "description": "Wireless vertical mouse designed to reduce wrist strain with 6 programmable buttons.",
+        "price": 59.99,
+        "supplierPrice": 25.00,
+        "supplier": "TechGear Wholesale",
+        "quantity": 150,
+        "rating": 4.4,
+        "brand": "ComfortTech",
+        "category": "Electronics"
+    }
+]

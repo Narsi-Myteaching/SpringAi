@@ -10,6 +10,20 @@ spring:
           model: gpt-5.4-mini
           max-completion-tokens: 100
           temperature: 0.5
+
+    chat:
+      memory:
+        repository:
+          jdbc:
+            initialize-schema: ALWAYS
+  datasource:
+    url: jdbc:${DB_TYPE:postgresql}://${DB_HOST:localhost}:${DB_PORT:5435}/${DB_NAME:clinexa-patients-db}
+    username: ${DB_USER_NAME:clinexa-patients-admin}
+    password: ${DB_USER_PASSWORD:clinexa2026$}
+  jpa:
+    hibernate:
+      ddl-auto: update
+
 server:
   port: 6020
 

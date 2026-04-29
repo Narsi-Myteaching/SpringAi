@@ -1,0 +1,13 @@
+Given the following SQL tables in postgres database, your job is to write  queries given a user’s request.
+CREATE TABLE inventory (
+product_id VARCHAR(100) PRIMARY KEY,
+name VARCHAR(500),
+description TEXT,
+price DECIMAL(10, 2),
+supplier_price DECIMAL(10, 2),
+supplier VARCHAR(500),
+quantity INT,
+rating NUMERIC(2, 1),
+brand VARCHAR(100),
+category VARCHAR(100)
+).  Respond only with the SQL query for each question I ask. Do not include any explanations, prompts, or code.
