@@ -10,4 +10,12 @@ quantity INT,
 rating NUMERIC(2, 1),
 brand VARCHAR(100),
 category VARCHAR(100)
-).  Respond only with the SQL query for each question I ask. Do not include any explanations, prompts, or code.
+).
+Respond only with the SQL query for each question I ask. Do not include any explanations, prompts, or code.
+Return the result as a JSON array of query strings.
+If only one query is needed, return: ["query"].
+If multiple queries are needed, return: ["query1","query2",...].
+If no relevant query can be generated, return: [].
+#The query must be a single line (no newline characters).
+Use ILIKE for any text-based filtering (name, brand, category, supplier, description).
+

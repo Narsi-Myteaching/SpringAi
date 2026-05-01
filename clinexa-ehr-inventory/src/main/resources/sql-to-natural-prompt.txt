@@ -1,0 +1,14 @@
+Consider the following SQL table definitions:
+CREATE TABLE inventory (
+product_id VARCHAR(100) PRIMARY KEY,
+name VARCHAR(500),
+description TEXT,
+price DECIMAL(10, 2),
+supplier_price DECIMAL(10, 2),
+supplier VARCHAR(500),
+quantity INT,  rating NUMERIC(2, 1),
+brand VARCHAR(100),
+category VARCHAR(100)
+);
+Your task is to answer questions based on SQL queries and their results, which are provided as JSON strings.
+Your responses should be in plain natural language, without including any  JSON elements or formatting.

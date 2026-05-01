@@ -1,5 +1,7 @@
 package com.narsiit.app.web.service;
 
+import com.fasterxml.jackson.core.JsonProcessingException;
+import com.fasterxml.jackson.core.type.TypeReference;
 import com.fasterxml.jackson.databind.ObjectMapper;
 import com.narsiit.app.models.Product;
 import com.narsiit.app.repos.ProductRepository;
@@ -10,6 +12,7 @@ import org.springframework.ai.chat.client.ChatClient;
 import org.springframework.ai.chat.messages.Message;
 import org.springframework.ai.chat.messages.SystemMessage;
 import org.springframework.ai.chat.messages.UserMessage;
+import org.springframework.ai.chat.model.ChatResponse;
 import org.springframework.ai.chat.prompt.Prompt;
 import org.springframework.jdbc.core.JdbcTemplate;
 import org.springframework.stereotype.Service;
@@ -33,10 +36,32 @@ public class ProductsServiceImpl implements ProductsService {
   @Override
   @SneakyThrows
   public String getProductsFromDb(String sqlQuery) {
+
     var dbProducts = jdbcTemplate.queryForList(sqlQuery);
     ObjectMapper mapper = new ObjectMapper();
     String productsJson = mapper.writeValueAsString(dbProducts);
     return productsJson;
+  }
+
+  @SneakyThrows
+  @Override
+  public List<String> getProductsFromMultipleDbQuesries(List<String> sqlQuery) {
+
+    List<String> quesryResponse = new ArrayList<>();
+
+    sqlQuery.forEach(query->{
+      var dbProducts = jdbcTemplate.queryForList(query);
+      ObjectMapper mapper = new ObjectMapper();
+        try {
+            String productsJson = mapper.writeValueAsString(dbProducts);
+          quesryResponse.add(productsJson);
+        } catch (JsonProcessingException e) {
+            throw new RuntimeException(e);
+        }
+    });
+
+
+    return quesryResponse;
   }
 
   @Override
@@ -70,7 +95,30 @@ public class ProductsServiceImpl implements ProductsService {
     return llmQuery;
   }
 
+  @Override
+  public String generateFinalAnswer(String question, String sqlQuery, List<String> sqlJson) {
+    String context = readFromClasspath("sql-to-natural-prompt.txt");
+    String userMessage = "Question: \n" + question +  "sqlQuery: \n" + sqlQuery +  "results: " + sqlJson;
+    var messages = new ArrayList<Message>();
+    messages.add(new SystemMessage(context));
+    messages.add(new UserMessage(userMessage));
+    Prompt prompt = new Prompt(messages);
+    // call the chat client
+    ChatResponse chatResponse = chatClient.prompt(prompt).call().chatResponse();
+    // get the answer
+    String result = chatResponse.getResult().getOutput().getText();
+    return result;
+  }
 
+
+  @SneakyThrows
+  @Override
+  public List<String> convertJsonToArray(String multipleQueriesJson){
+    ObjectMapper mapper = new ObjectMapper();
+    return  mapper.readValue(multipleQueriesJson, new TypeReference<List<String>>() {
+
+    });
+  }
 
   public String readFromClasspath(String filename) {
     InputStream inputStream = getClass().getClassLoader().getResourceAsStream(filename);

@@ -1,10 +1,14 @@
 package com.narsiit.app.web.service;
 
 import com.narsiit.app.models.Product;
+import lombok.SneakyThrows;
 
 import java.util.List;
 
 public interface ProductsService {
+
+    @SneakyThrows
+    List<String> getProductsFromMultipleDbQuesries(List<String> sqlQuery);
 
     Product createProduct(Product product);
     List<Product> getAllPorducts();
@@ -13,4 +17,9 @@ public interface ProductsService {
     String generateSqlQuery(String userQuestion);
 
     String getProductsFromDb(String sqlQuery);
+
+    String generateFinalAnswer(String question, String sqlQuery, List<String> sqlJson);
+
+    @SneakyThrows
+    List<String> convertJsonToArray(String multipleQueriesJson);
 }

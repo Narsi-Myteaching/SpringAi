@@ -39,8 +39,17 @@ public class ProductsController {
     }
 
     @PostMapping(value = {"/query-products"})
-    public String queryProducts(@RequestBody ChatBotRequest chatBotRequest) {
-        String assistantAnswer =  productsService.generateSqlQuery(chatBotRequest.question());
-        return productsService.getProductsFromDb(assistantAnswer);
+    public ChatBotResponse queryProducts(@RequestBody ChatBotRequest chatBotRequest) {
+        String question = chatBotRequest.question();
+
+        //LLM Generated Queries
+        String sqlQuery =  productsService.generateSqlQuery(chatBotRequest.question());
+
+
+        String sqlJson = productsService.getProductsFromDb(sqlQuery);
+        //if multiple queries returned by the LLM (few LLMS does) then convert them to json
+        List<String> multipleQuesries =  productsService.convertJsonToArray(sqlJson);
+        String finalAnswer =  productsService.generateFinalAnswer(question,sqlQuery,multipleQuesries);
+        return  new ChatBotResponse(question, finalAnswer);
     }
 }
