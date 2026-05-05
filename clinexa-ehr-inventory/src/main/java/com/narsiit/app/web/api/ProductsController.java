@@ -45,11 +45,16 @@ public class ProductsController {
         //LLM Generated Queries
         String sqlQuery =  productsService.generateSqlQuery(chatBotRequest.question());
 
+        //Convert Json Array queries to List
+        List<String> convertedQueries = productsService.convertJsonToArray(sqlQuery);
 
-        String sqlJson = productsService.getProductsFromDb(sqlQuery);
+        //String sqlJson = productsService.getProductsFromDb(sqlQuery);
+        List<String> dbRecordsJosn =  productsService.getProductsFromMultipleDbQuesries(convertedQueries);
+
         //if multiple queries returned by the LLM (few LLMS does) then convert them to json
-        List<String> multipleQuesries =  productsService.convertJsonToArray(sqlJson);
-        String finalAnswer =  productsService.generateFinalAnswer(question,sqlQuery,multipleQuesries);
+       // List<String> multipleQuesries =  productsService.convertJsonToArray(sqlJson);
+
+        String finalAnswer =  productsService.generateFinalAnswer(question,sqlQuery,dbRecordsJosn);
         return  new ChatBotResponse(question, finalAnswer);
     }
 }

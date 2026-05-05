@@ -19,6 +19,7 @@ public interface ProductsService {
     String getProductsFromDb(String sqlQuery);
 
     String generateFinalAnswer(String question, String sqlQuery, List<String> sqlJson);
+    String generateFinalAnswer(String question, String sqlQuery, String singleQuery);
 
     @SneakyThrows
     List<String> convertJsonToArray(String multipleQueriesJson);

@@ -110,6 +110,21 @@ public class ProductsServiceImpl implements ProductsService {
     return result;
   }
 
+  @Override
+  public String generateFinalAnswer(String question, String sqlQuery, String sqlJson) {
+    String context = readFromClasspath("sql-to-natural-prompt.txt");
+    String userMessage = "Question: \n" + question +  "sqlQuery: \n" + sqlQuery +  "results: " + sqlJson;
+    var messages = new ArrayList<Message>();
+    messages.add(new SystemMessage(context));
+    messages.add(new UserMessage(userMessage));
+    Prompt prompt = new Prompt(messages);
+    // call the chat client
+    ChatResponse chatResponse = chatClient.prompt(prompt).call().chatResponse();
+    // get the answer
+    String result = chatResponse.getResult().getOutput().getText();
+    return result;
+  }
+
 
   @SneakyThrows
   @Override
