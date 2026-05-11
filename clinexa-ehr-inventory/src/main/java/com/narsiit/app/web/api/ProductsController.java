@@ -57,4 +57,9 @@ public class ProductsController {
         String finalAnswer =  productsService.generateFinalAnswer(question,sqlQuery,dbRecordsJosn);
         return  new ChatBotResponse(question, finalAnswer);
     }
+
+    @PostMapping("/process-text-files")
+    public ChatBotResponse processTextFiles(@RequestBody ChatBotRequest chatBotRequest){
+        return productsService.processTextFiles(chatBotRequest);
+    }
 }

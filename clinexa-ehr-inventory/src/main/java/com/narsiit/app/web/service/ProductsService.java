@@ -1,5 +1,7 @@
 package com.narsiit.app.web.service;
 
+import com.narsiit.app.beans.ChatBotRequest;
+import com.narsiit.app.beans.ChatBotResponse;
 import com.narsiit.app.models.Product;
 import lombok.SneakyThrows;
 
@@ -23,4 +25,6 @@ public interface ProductsService {
 
     @SneakyThrows
     List<String> convertJsonToArray(String multipleQueriesJson);
+
+    ChatBotResponse processTextFiles(ChatBotRequest chatBotRequest);
 }

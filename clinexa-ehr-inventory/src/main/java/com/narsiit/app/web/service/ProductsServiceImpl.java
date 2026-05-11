@@ -3,19 +3,23 @@ package com.narsiit.app.web.service;
 import com.fasterxml.jackson.core.JsonProcessingException;
 import com.fasterxml.jackson.core.type.TypeReference;
 import com.fasterxml.jackson.databind.ObjectMapper;
+import com.narsiit.app.beans.ChatBotRequest;
+import com.narsiit.app.beans.ChatBotResponse;
+import com.narsiit.app.beans.ClinexaUserMessageModel;
 import com.narsiit.app.models.Product;
 import com.narsiit.app.repos.ProductRepository;
 import lombok.RequiredArgsConstructor;
 import lombok.SneakyThrows;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.ai.chat.client.ChatClient;
-import org.springframework.ai.chat.messages.Message;
-import org.springframework.ai.chat.messages.SystemMessage;
-import org.springframework.ai.chat.messages.UserMessage;
+import org.springframework.ai.chat.messages.*;
 import org.springframework.ai.chat.model.ChatResponse;
 import org.springframework.ai.chat.prompt.Prompt;
+import org.springframework.ai.content.Media;
+import org.springframework.core.io.ClassPathResource;
 import org.springframework.jdbc.core.JdbcTemplate;
 import org.springframework.stereotype.Service;
+import org.springframework.util.MimeTypeUtils;
 
 import java.io.BufferedReader;
 import java.io.InputStream;
@@ -133,6 +137,35 @@ public class ProductsServiceImpl implements ProductsService {
     return  mapper.readValue(multipleQueriesJson, new TypeReference<List<String>>() {
 
     });
+  }
+
+  @Override
+  public ChatBotResponse processTextFiles(ChatBotRequest chatBotRequest) {
+    String question = chatBotRequest.question();
+
+    ClassPathResource classPathResource = new ClassPathResource("vacuum-cleaner-products.txt");
+    Media media = new Media(MimeTypeUtils.TEXT_PLAIN,classPathResource);
+
+    ClinexaUserMessageModel userMessageModel = ClinexaUserMessageModel.builder()
+            .question(question)
+            .media(media)
+            .build();
+
+    String assistantContext = readFromClasspath("systemPrompt.txt");
+
+
+    SystemMessage systemMessageForContext = new SystemMessage(assistantContext);
+    UserMessage userMessage = new UserMessage(userMessageModel.toString());
+
+    var messagesList = new ArrayList<Message>();
+    messagesList.add(systemMessageForContext);
+    messagesList.add(userMessage);
+
+    Prompt prompt = new Prompt(messagesList);
+
+    String llmResponse =  chatClient.prompt(prompt).call().chatResponse().getResult().getOutput().getText();
+
+    return new ChatBotResponse(question, llmResponse);
   }
 
   public String readFromClasspath(String filename) {
