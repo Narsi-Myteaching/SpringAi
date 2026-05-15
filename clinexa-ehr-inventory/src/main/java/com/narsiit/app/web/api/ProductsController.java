@@ -62,4 +62,19 @@ public class ProductsController {
     public ChatBotResponse processTextFiles(@RequestBody ChatBotRequest chatBotRequest){
         return productsService.processTextFiles(chatBotRequest);
     }
+
+    @PostMapping("/process-pdf-files")
+    public ChatBotResponse processPdfFiles(@RequestBody ChatBotRequest chatBotRequest){
+        return productsService.processPdfFiles(chatBotRequest);
+    }
+
+    @PostMapping("/process-image-files")
+    public ChatBotResponse processImageFiles(@RequestBody ChatBotRequest chatBotRequest){
+        return productsService.processImageFiles(chatBotRequest);
+    }
+
+    @PostMapping("/process-audio-files")
+    public ChatBotResponse processAudioFiles(@RequestBody ChatBotRequest chatBotRequest){
+        return productsService.processAudioFiles(chatBotRequest);
+    }
 }

@@ -8,6 +8,7 @@ import com.narsiit.app.beans.ChatBotResponse;
 import com.narsiit.app.beans.ClinexaUserMessageModel;
 import com.narsiit.app.models.Product;
 import com.narsiit.app.repos.ProductRepository;
+import jdk.jfr.ContentType;
 import lombok.RequiredArgsConstructor;
 import lombok.SneakyThrows;
 import lombok.extern.slf4j.Slf4j;
@@ -17,6 +18,7 @@ import org.springframework.ai.chat.model.ChatResponse;
 import org.springframework.ai.chat.prompt.Prompt;
 import org.springframework.ai.content.Media;
 import org.springframework.core.io.ClassPathResource;
+import org.springframework.http.MediaType;
 import org.springframework.jdbc.core.JdbcTemplate;
 import org.springframework.stereotype.Service;
 import org.springframework.util.MimeTypeUtils;
@@ -53,17 +55,17 @@ public class ProductsServiceImpl implements ProductsService {
 
     List<String> quesryResponse = new ArrayList<>();
 
-    sqlQuery.forEach(query->{
-      var dbProducts = jdbcTemplate.queryForList(query);
-      ObjectMapper mapper = new ObjectMapper();
-        try {
+    sqlQuery.forEach(
+        query -> {
+          var dbProducts = jdbcTemplate.queryForList(query);
+          ObjectMapper mapper = new ObjectMapper();
+          try {
             String productsJson = mapper.writeValueAsString(dbProducts);
-          quesryResponse.add(productsJson);
-        } catch (JsonProcessingException e) {
+            quesryResponse.add(productsJson);
+          } catch (JsonProcessingException e) {
             throw new RuntimeException(e);
-        }
-    });
-
+          }
+        });
 
     return quesryResponse;
   }
@@ -102,7 +104,8 @@ public class ProductsServiceImpl implements ProductsService {
   @Override
   public String generateFinalAnswer(String question, String sqlQuery, List<String> sqlJson) {
     String context = readFromClasspath("sql-to-natural-prompt.txt");
-    String userMessage = "Question: \n" + question +  "sqlQuery: \n" + sqlQuery +  "results: " + sqlJson;
+    String userMessage =
+        "Question: \n" + question + "sqlQuery: \n" + sqlQuery + "results: " + sqlJson;
     var messages = new ArrayList<Message>();
     messages.add(new SystemMessage(context));
     messages.add(new UserMessage(userMessage));
@@ -117,7 +120,8 @@ public class ProductsServiceImpl implements ProductsService {
   @Override
   public String generateFinalAnswer(String question, String sqlQuery, String sqlJson) {
     String context = readFromClasspath("sql-to-natural-prompt.txt");
-    String userMessage = "Question: \n" + question +  "sqlQuery: \n" + sqlQuery +  "results: " + sqlJson;
+    String userMessage =
+        "Question: \n" + question + "sqlQuery: \n" + sqlQuery + "results: " + sqlJson;
     var messages = new ArrayList<Message>();
     messages.add(new SystemMessage(context));
     messages.add(new UserMessage(userMessage));
@@ -129,14 +133,11 @@ public class ProductsServiceImpl implements ProductsService {
     return result;
   }
 
-
   @SneakyThrows
   @Override
-  public List<String> convertJsonToArray(String multipleQueriesJson){
+  public List<String> convertJsonToArray(String multipleQueriesJson) {
     ObjectMapper mapper = new ObjectMapper();
-    return  mapper.readValue(multipleQueriesJson, new TypeReference<List<String>>() {
-
-    });
+    return mapper.readValue(multipleQueriesJson, new TypeReference<List<String>>() {});
   }
 
   @Override
@@ -144,15 +145,12 @@ public class ProductsServiceImpl implements ProductsService {
     String question = chatBotRequest.question();
 
     ClassPathResource classPathResource = new ClassPathResource("vacuum-cleaner-products.txt");
-    Media media = new Media(MimeTypeUtils.TEXT_PLAIN,classPathResource);
+    Media media = new Media(MimeTypeUtils.TEXT_PLAIN, classPathResource);
 
-    ClinexaUserMessageModel userMessageModel = ClinexaUserMessageModel.builder()
-            .question(question)
-            .media(media)
-            .build();
+    ClinexaUserMessageModel userMessageModel =
+        ClinexaUserMessageModel.builder().question(question).media(media).build();
 
     String assistantContext = readFromClasspath("systemPrompt.txt");
-
 
     SystemMessage systemMessageForContext = new SystemMessage(assistantContext);
     UserMessage userMessage = new UserMessage(userMessageModel.toString());
@@ -163,9 +161,102 @@ public class ProductsServiceImpl implements ProductsService {
 
     Prompt prompt = new Prompt(messagesList);
 
-    String llmResponse =  chatClient.prompt(prompt).call().chatResponse().getResult().getOutput().getText();
+    String llmResponse =
+        chatClient.prompt(prompt).call().chatResponse().getResult().getOutput().getText();
 
     return new ChatBotResponse(question, llmResponse);
+  }
+
+  @Override
+  public ChatBotResponse processPdfFiles(ChatBotRequest chatBotRequest) {
+    String question = chatBotRequest.question();
+
+    ClassPathResource classPathResource = new ClassPathResource("laptop_user_manual.pdf");
+    Media media = new Media(MimeTypeUtils.parseMimeType("application/pdf"), classPathResource);
+
+    ClinexaUserMessageModel userMessageModel =
+        ClinexaUserMessageModel.builder().question(question).media(media).build();
+
+    String assistantContext =
+        "You are an assistant, who can provide assistance  with product manual information mentioned in the attachment. "
+            + "You should answer only based on below data, You don’t know any other stuff.";
+
+    SystemMessage systemMessageForContext = new SystemMessage(assistantContext);
+    UserMessage userMessage = new UserMessage(userMessageModel.toString());
+    var messagesList = new ArrayList<Message>();
+    messagesList.add(systemMessageForContext);
+    messagesList.add(userMessage);
+    Prompt prompt = new Prompt(messagesList);
+    String llmResponse =
+        chatClient.prompt(prompt).call().chatResponse().getResult().getOutput().getText();
+
+    return new ChatBotResponse(question, llmResponse);
+  }
+
+  @Override
+  public ChatBotResponse processImageFiles(ChatBotRequest chatBotRequest) {
+    String question = chatBotRequest.question();
+
+    ClassPathResource classPathResource = new ClassPathResource("coupons_info.jpg");
+    log.info("is file existed {}", classPathResource.exists());
+    log.info("File loaded is {}", classPathResource.getFilename());
+    Media media = new Media(MimeTypeUtils.APPLICATION_OCTET_STREAM, classPathResource);
+
+    ClinexaUserMessageModel userMessageModel =
+        ClinexaUserMessageModel.builder().question(question).media(media).build();
+
+    String assistantContext =
+        "You are an assistant, who can provide assistance  with information mentioned in the image file. "
+            + "You should answer only based on the below content."
+            + "You don’t know any other stuff. do not include any special characters and new lines";
+
+    // String assistantContext = readFromClasspath("image-data-loading-system-prompt.txt");
+
+    SystemMessage systemMessageForContext = new SystemMessage(assistantContext);
+    UserMessage userMessage = new UserMessage(userMessageModel.toString());
+    var messagesList = new ArrayList<Message>();
+    messagesList.add(systemMessageForContext);
+    messagesList.add(userMessage);
+    Prompt prompt = new Prompt(messagesList);
+    String llmResponse =
+        chatClient.prompt(prompt).call().chatResponse().getResult().getOutput().getText();
+
+    return new ChatBotResponse(question, llmResponse);
+  }
+
+  @SneakyThrows
+    @Override
+  public ChatBotResponse processAudioFiles(ChatBotRequest chatBotRequest) {
+
+    String assistantContext =
+        "You are an assistant, who can provide assistance with information based on audio. " +
+                "You should answer the question only based on audio, " +
+                "You dont know any other stuff. " +
+                "Be precise of whats has been asked and answer accordingly.";
+
+    SystemMessage systemMessage = new SystemMessage(assistantContext);
+
+    String question = chatBotRequest.question();
+
+    ClassPathResource audioFile = new ClassPathResource("/sarah-customercare.mp3");
+    log.info("is audio file existed {}", audioFile.exists());
+    log.info("audio File loaded is {}", audioFile.getFilename());
+    Media media = new Media(MimeTypeUtils.parseMimeType("audio/transcript"), audioFile);
+    //Media media = new Media(MimeTypeUtils.APPLICATION_OCTET_STREAM, audioFile.getURI());
+
+    ClinexaUserMessageModel clinexaUserMessageModel =
+        ClinexaUserMessageModel.builder().question(question).media(media).build();
+    UserMessage userMessage = new UserMessage(clinexaUserMessageModel.toString());
+
+    var promptMessages = new ArrayList<Message>();
+    promptMessages.add(systemMessage);
+    promptMessages.add(userMessage);
+
+    Prompt prompt = new Prompt(promptMessages);
+    ChatResponse chatResponse = chatClient.prompt(prompt).call().chatResponse();
+    log.info("Chat Response {}", chatResponse);
+    String llmAnswer =  chatClient.prompt(prompt).call().chatResponse().getResult().getOutput().getText();
+    return new ChatBotResponse(question,llmAnswer);
   }
 
   public String readFromClasspath(String filename) {

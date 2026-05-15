@@ -27,4 +27,10 @@ public interface ProductsService {
     List<String> convertJsonToArray(String multipleQueriesJson);
 
     ChatBotResponse processTextFiles(ChatBotRequest chatBotRequest);
+
+    ChatBotResponse processPdfFiles(ChatBotRequest chatBotRequest);
+
+    ChatBotResponse processImageFiles(ChatBotRequest chatBotRequest);
+
+    ChatBotResponse processAudioFiles(ChatBotRequest chatBotRequest);
 }
