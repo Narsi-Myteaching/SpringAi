@@ -18,10 +18,23 @@ spring:
           model: gpt-5.4-mini
           max-completion-tokens: 100
           temperature: 0.5
+      audio:
+        transcription:
+          options:
+            model: whisper-1
+            language: en
+            temperature: 0
+            response-format: TEXT
     chat:
       memory:
         repository:
           jdbc:
             initialize-schema: ALWAYS #By default, schema initialization runs only for embedded databases
+  servlet:
+    multipart:
+      max-file-size: 100MB
+      max-request-size: 100MB
 server:
   port: 6020
+
+
